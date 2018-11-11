@@ -20,31 +20,28 @@ def callback(scan):
     #printf("[YDLIDAR INFO]: I heard a laser scan %s[%d]:\n", scan->header.frame_id.c_str(), count);
     #printf("[YDLIDAR INFO]: angle_range : [%f, %f]\n", RAD2DEG(scan->angle_min), RAD2DEG(scan->angle_max));
 
-
+    output = "nothing"
     for i in range (0, count):
-        sum = scan.ranges[i];
-        i_copy = i;
-        for j in range (0, 9):
-            i_copy = i_copy - 1
-            if i_copy < 0:
-                i_copy = count - 1
-            sum = sum + filter[i_copy]
-        sum = sum / 10
-        filter[i] = sum
+#        time.sleep(1)
+        filter[i] = scan.ranges[i]
         degree = rad2deg(scan.angle_min + scan.angle_increment*i)
-        if (degree >= 1 and degree <= 1.5):
-            if (filter[i] < 0.1 and filter [i-1] < 0.1 and filter [i-2] < 0.1):
-                print ("stuff")
-                arduino.write(b'2')
-                time.sleep(1)
+        if (degree >=1 and degree < 1.5):
+            if (filter[i] < 0.4 and filter [i-1] < 0.4 and filter [i-2] < 0.4):
+                if (output == "nothing"):
+                    output = "stuff"
+                    arduino.write(b'1')
+#                time.sleep(1)
             else: 
-                print ("nothing")
-
+                if (output == "stuff"):
+                    output = "nothing"
+		    arduino.write(b'2')
+#                time.sleep(1)
+            print(output)
 
 
 def ydlidar_client():
     rospy.init_node('ydlidar_client')
-    rospy.Subscriber("scan", LaserScan, callback)
+    rospy.Subscriber("scan_filtered", LaserScan, callback)
     rospy.spin()
 
 if __name__ == '__main__':
