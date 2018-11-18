@@ -13,7 +13,7 @@
  * 
 */
 
-#define reference_signal 11 // set the speed in RPS here
+#define reference_signal 35 // set the speed in RPS here
 
 #define K_p 0.1
 #define K_i 0
@@ -35,6 +35,8 @@ double e_k2; // variable for D (not in use)
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
+  myservo.attach(9);
+  myservo.writeMicroseconds(1500);//set servo to mid-point
   e_k = 0;
   e_k1 = 0;
   e_k2 = 0;
@@ -55,30 +57,68 @@ void setup() {
 void loop() {
   // put your main code here, to run repeatedly:
   
-    if(Serial.available()){
+    /*if(Serial.available()){
       h = Serial.read()-'0';
       Serial.println(h);
       switch(h){
         case 1:
           myservo.write(120);
-          control_signal = control_signal + increment_pid();
-          PPM_output(control_signal);
+          delay(100);
           break;
         case 2:
           myservo.write(80);
-          control_signal = control_signal + increment_pid();
-          PPM_output(control_signal);
-          break;
+          delay(100);
+          break;      
       }
+    }*/
+    if(Serial.available()){
+    h = Serial.read()-'0';
+    switch(h){
+      case 1 :
+      myservo.write(120);
+      delay(100);
+      control_signal = control_signal + increment_pid();
+      if(control_signal > 180)
+        {
+          control_signal = 180;
+        }
+      PPM_output(control_signal);
+      break;
+      
+      case 2 :
+      myservo.write(80);
+      delay(100);
+      
+      control_signal = control_signal + increment_pid();
+      if(control_signal > 180)
+        {
+          control_signal = 180;
+        }
+      PPM_output(control_signal);
+      break; 
+    }
+    }
+  
+  //control_signal = control_signal + increment_pid(); //calculate the control signal with input signal+error signal
+  //PPM_output(control_signal); //output the signal calculated
   //High and low boundary
   //Serial.println("motor speed:");
   //Serial.println(motor_speed);
   //Serial.println("output:");
   //Serial.println(control_signal);
   
-}
-}
 
+    //if the above loop works, uncommand this part to make the car move
+    control_signal = control_signal + increment_pid();
+    if(control_signal > 180)
+      {
+        control_signal = 180;
+      }
+    PPM_output(control_signal); //should be <= 180
+    Serial.println(control_signal);
+
+
+}
 void speed_measure() {
   // measures the motor rpm using quadrature encoder
   encoder_counter = 0;
